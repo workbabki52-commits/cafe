@@ -3,11 +3,193 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>МенюКафе — меню с заказом со стола</title>
-<link rel="stylesheet" href="style.css">
+<title>Кабинет покупателя — меню</title>
+<style>
+:root{--bg:#faf6f0;--card:#fff;--ink:#241b12;--muted:#8a7a66;--accent:#e2711d;--accent-dark:#c35a10;--accent-soft:#fdeede;--line:#eae1d4;--ok:#1c9d5f;--ok:#1c9d5f;--ok-soft:#e1f5ea;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+.top{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line);}
+.top-inner{max-width:560px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.brand{font-weight:800;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nav{display:flex;gap:6px;flex-shrink:0;}
+.nav a{text-decoration:none;color:var(--muted);font-size:13.5px;font-weight:600;padding:7px 12px;border-radius:999px;}
+.nav a.active{background:var(--ink);color:#fff;}
+.container{max-width:560px;margin:0 auto;padding:18px 16px 96px;}
+h1{font-size:23px;margin:6px 0 4px;letter-spacing:-.4px;}
+.sub{color:var(--muted);font-size:14px;margin:0 0 16px;}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:22px 0 10px;}
+.items{display:flex;flex-direction:column;gap:10px;}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:0 1px 3px rgba(36,27,18,.08);}
+.item-info{flex:1;min-width:0;}
+.item-name{font-weight:700;font-size:15px;}
+.item-desc{color:var(--muted);font-size:13px;margin-top:2px;}
+.item-price{font-weight:700;color:var(--accent-dark);font-size:14.5px;margin-top:4px;}
+.item-ctrl{flex-shrink:0;}
+.btn-add{width:38px;height:38px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:22px;font-weight:700;cursor:pointer;line-height:1;}
+.stepper{display:flex;align-items:center;gap:10px;background:var(--accent-soft);border-radius:999px;padding:4px 6px;}
+.stepper button{width:30px;height:30px;border-radius:50%;border:none;background:var(--card);color:var(--accent-dark);font-size:17px;font-weight:800;cursor:pointer;line-height:1;}
+.stepper span{min-width:18px;text-align:center;font-weight:700;}
+.line-total{font-weight:800;color:var(--accent-dark);white-space:nowrap;}
+.cart-fixed{position:fixed;bottom:16px;left:0;right:0;padding:0 16px;max-width:560px;margin:0 auto;z-index:20;}
+.btn{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:13px 18px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;width:100%;box-shadow:0 6px 18px rgba(227,113,29,.35);}
+.btn:hover{background:var(--accent-dark);}
+.link-back{display:inline-block;margin:4px 0 14px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;background:none;border:none;padding:0;font:inherit;}
+.link-back:hover{color:var(--accent-dark);}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+.field input,.field select{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;color:var(--ink);}
+.field input:focus,.field select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent);}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(36,27,18,.08);}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(36,27,18,.08);}
+.summary .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.summary .row:last-child{border-bottom:none;}
+.summary .row span:first-child{color:var(--muted);}
+.success-icon{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;margin:8px auto 14px;}
+.center{text-align:center;}
+.steps{display:flex;gap:6px;margin:14px 0;align-items:center;font-size:12.5px;color:var(--muted);font-weight:600;}
+.steps .step.on{color:var(--ink);}
+.steps .dot{width:6px;height:6px;border-radius:50%;background:var(--line);}
+.steps .dot.on{background:var(--accent);}
+.empty{color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:16px;text-align:center;font-size:14px;}
+.order{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(36,27,18,.08);}
+.order .oh{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:800;font-size:14px;margin-bottom:6px;}
+.badge{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;}
+.badge.new{background:var(--ok-soft);color:var(--ok);}
+.badge.cooking{background:#fdf1d9;color:#d98a00;}
+.badge.done{background:var(--accent-soft);color:var(--accent-dark);}
+.badge.cancelled{background:#fdecec;color:#cc3f3f;}
+.order .oi{font-size:13.5px;color:var(--muted);}
+.order .tot{font-weight:800;margin-top:6px;}
+.prof{padding:20px 16px 26px;}
+</style>
 </head>
 <body>
-<div id="app"></div>
-<script src="app.js"></script>
+<div class="top"><div class="top-inner">
+  <div class="brand" id="brand"></div>
+  <nav class="nav">
+    <a href="#/menu" id="nav-menu">Меню</a>
+    <a href="#/cabinet" id="nav-cab">Кабинет</a>
+  </nav>
+</div></div>
+<main class="container prof" id="app"></main>
+<script>
+const STORE='cafe_db_v1';
+const PROFILE='cafe_client_profile';
+const BCNAME='cafe_orders';
+let db=load(STORE);
+let prof=loadProfile();
+let flow={view:location.hash==='#/cabinet'?'cabinet':'menu',cart:{},table:'',name:prof.name,phone:prof.phone,email:prof.email,comment:'',lastOrder:null};
+const app=document.getElementById('app');
+
+function defaultSeed(){ return {
+  business:{name:'Кофе «Точка»',address:'г. Москва, ул. Пушкина, 5',phone:'+7 900 000-00-00',tables:8},
+  categories:[{id:1,name:'Кофе'},{id:2,name:'Завтраки'},{id:3,name:'Десерты'},{id:4,name:'Холодные напитки'}],
+  items:[
+    {id:1,catId:1,name:'Капучино',desc:'Классический, 250 мл',price:220},
+    {id:2,catId:1,name:'Латте',desc:'Нежный, 300 мл',price:250},
+    {id:3,catId:1,name:'Раф ванильный',desc:'Сливки и ваниль, 300 мл',price:290},
+    {id:4,catId:2,name:'Сырники',desc:'Со сметаной и ягодами',price:320},
+    {id:5,catId:2,name:'Каша на кокосовом молоке',desc:'Гречневая с бананом',price:280},
+    {id:6,catId:2,name:'Сэндвич с лососем',desc:'Цельнозерновой хлеб, рикотта',price:390},
+    {id:7,catId:3,name:'Чизкейк',desc:'Классический с ягодами',price:340},
+    {id:8,catId:3,name:'Тирамису',desc:'Порция',price:360},
+    {id:9,catId:4,name:'Лимонад имбирный',desc:'Домашний, 400 мл',price:210},
+    {id:10,catId:4,name:'Флэт-уайт холодный',desc:'Cold brew с молоком',price:280}
+  ],
+  orders:[],nextId:1
+}; }
+function load(k){ try{const r=localStorage.getItem(k);if(r){const d=JSON.parse(r);if(d)return k===STORE?d:d;}}catch(e){} return k===STORE?defaultSeed():{}; }
+function save(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+function loadProfile(){ try{const r=localStorage.getItem(PROFILE);if(r)return JSON.parse(r);}catch(e){} return {name:'',phone:'',email:'',myOrders:[]}; }
+function saveProfile(){ save(PROFILE,prof); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function money(n){ return Number(n).toLocaleString('ru-RU')+' ₽'; }
+function getItem(id){ return db.items.find(i=>String(i.id)===String(id)); }
+function cartCount(){ return Object.values(flow.cart).reduce((a,b)=>a+b,0); }
+function cartTotal(){ return Object.entries(flow.cart).reduce((s,e)=>{const it=getItem(e[0]);return s+(it?it.price*e[1]:0);},0); }
+
+function brand(){ document.getElementById('brand').textContent=db.business.name||'Кофе'; }
+function nav(){ document.getElementById('nav-menu').classList.toggle('active',flow.view==='menu');
+  document.getElementById('nav-cab').classList.toggle('active',flow.view==='cabinet'); }
+
+function render(){
+  brand();
+  if(flow.view==='cart'){ app.innerHTML=cartHtml(); nav(); return; }
+  if(flow.view==='done'){ app.innerHTML=doneHtml(); nav(); return; }
+  if(flow.view==='cabinet'){ app.innerHTML=cabinetHtml(); nav(); return; }
+  app.innerHTML=menuHtml(); nav();
+}
+
+function menuHtml(){
+  const cats=(db.categories||[]).map(c=>{
+    const its=db.items.filter(i=>String(i.catId)===String(c.id));
+    if(its.length===0)return;
+    return `<h2>${esc(c.name)}</h2><div class="items">${its.map(itemCard).join('')}</div>`;
+  }).join('');
+  const bar=cartCount()>0?`<div class="cart-fixed"><button class="btn" onclick="goCart()">Корзина · ${cartCount()} · ${money(cartTotal())}</button></div>`:'';
+  return `<h1>${esc(db.business.name)}</h1><p class="sub">${esc(db.business.address)}</p>${cats||'<div class="empty">Меню пустое</div>'}${bar}`;
+}
+function itemCard(i){ return `<div class="item"><div class="item-info"><div class="item-name">${esc(i.name)}</div>${i.desc?`<div class="item-desc">${esc(i.desc)}</div>`:''}<div class="item-price">${money(i.price)}</div></div><div class="item-ctrl">${qtyControl(i.id)}</div></div>`; }
+function qtyControl(id){ const q=flow.cart[id]||0; return q===0?`<button class="btn-add" onclick="addToCart('${id}')">+</button>`:`<div class="stepper"><button onclick="changeQty('${id}',-1)">−</button><span>${q}</span><button onclick="changeQty('${id}',1)">+</button></div>`; }
+function cartHtml(){
+  const lines=Object.entries(flow.cart).map(e=>{const it=getItem(e[0]);if(!it)return'';const q=e[1];return `<div class="item"><div class="item-info"><div class="item-name">${esc(it.name)}</div><div class="item-price">${money(it.price)} × ${q}</div></div><div class="item-ctrl">${qtyControl(it.id)}</div><div class="line-total">${money(it.price*q)}</div></div>`;}).join('');
+  const tos=Array.from({length:(db.business&&db.business.tables)||8},(_,i)=>`<option value="${i+1}">Стол ${i+1}</option>`).join('');
+  return `<button class="link-back" onclick="backToMenu()">← В меню</button><h1>Ваш заказ</h1><p class="sub">Заполните контакты — они сохранятся в кабинете</p>${lines||'<div class="empty">Корзина пуста</div>'}
+  <div class="summary"><div class="row"><span>Итого</span><b>${money(cartTotal())}</b></div></div>
+  <div class="field"><label>Номер стола</label><select id="f-table">${tos}</select></div>
+  <div class="field"><label>Ваше имя</label><input id="f-name" value="${esc(flow.name)}"></div>
+  <div class="field"><label>Телефон</label><input id="f-phone" value="${esc(flow.phone)}" placeholder="+7 ___-__-__"></div>
+  <div class="field"><label>Почта</label><input id="f-email" type="email" value="${esc(flow.email)}" placeholder="you@mail.ru"></div>
+  <div class="field"><label>Комментарий</label><input id="f-comment" value="${esc(flow.comment)}" placeholder="Без сахара..."></div>
+  <button class="btn" onclick="submit()">Отправить заказ</button>`;
+}
+function doneHtml(){ const o=flow.lastOrder; return `<div class="center"><div class="success-icon">✓</div><h1>Заказ принят!</h1><p class="sub">Контакты и номер #${o.id} сохранены в вашем кабинете</p></div><div class="summary"><div class="row"><span>Заказ</span><b>#${o.id}</b></div><div class="row"><span>Стол</span><b>${o.table}</b></div>${o.items.map(i=>`<div class="row"><span>${esc(i.name)} × ${i.qty}</span><b>${money(i.price*i.qty)}</b></div>`).join('')}<div class="row"><span>Итого</span><b>${money(o.total)}</b></div></div><div style="height:14px"></div><div class="btn" onclick="goMenu()">В меню</div>`; }
+function cabinetHtml(){
+  const LBL={new:'Новый',cooking:'Готовится',done:'Выдан',cancelled:'Отменён'};
+  function orderCard(o){ return `<div class="order"><div class="oh"><span>Заказ #${o.id} · Стол ${o.table}</span><span class="badge ${o.status}">${LBL[o.status]}</span></div><div class="oi">${o.items.map(i=>`${i.name} × ${i.qty}`).join(', ')}</div><div class="tot">${money(o.total)}</div></div>`; }
+  const mine=(prof.myOrders||[]).slice().reverse();
+  const list=db.orders.filter(o=>mine.includes(o.id)).map(orderCard).join('')||'<div class="empty">Заказов пока нет</div>';
+  return `<h1>Мой кабинет</h1><p class="sub">Ваши контакты и заказы этого устройства</p>
+  <div class="card">
+    <div class="field"><label>Имя</label><input id="p-name" value="${esc(prof.name)}"></div>
+    <div class="field"><label>Телефон</label><input id="p-phone" value="${esc(prof.phone)}" placeholder="+7 ___-__-__"></div>
+    <div class="field"><label>Почта</label><input id="p-email" type="email" value="${esc(prof.email)}" placeholder="you@mail.ru"></div>
+    <button class="btn" onclick="saveProf()">Сохранить контакты</button>
+  </div>
+  <h2>Мои заказы</h2>${list}`;
+}
+function goCart(){flow.view='cart';render();}
+function goMenu(){flow.view='menu';render();}
+function backToMenu(){flow.view='menu';flow.comment='';render();}
+function addToCart(id){flow.cart[id]=(flow.cart[id]||0)+1;render();}
+function changeQty(id,d){const q=(flow.cart[id]||0)+d;if(q<=0)delete flow.cart[id];else flow.cart[id]=q;render();}
+
+function submit(){
+  if(cartCount()===0){alert('Корзина пуста');return;}
+  const table=parseInt(document.getElementById('f-table').value,10);
+  flow.name=document.getElementById('f-name').value.trim();
+  flow.phone=document.getElementById('f-phone').value.trim().replace(/\s+/g,' ');
+  flow.email=document.getElementById('f-email').value.trim();
+  flow.comment=document.getElementById('f-comment').value.trim();
+  const items=Object.entries(flow.cart).map(e=>{const it=getItem(e[0]);return{name:it.name,price:it.price,qty:e[1]};});
+  const order={id:db.nextId++,createdAt:new Date().toISOString(),table,name:flow.name,phone:flow.phone,email:flow.email,comment:flow.comment,items,total:cartTotal(),status:'new'};
+  db.orders.push(order); db.nextId++;
+  save(STORE,db);
+  try{new BroadcastChannel(BCNAME).postMessage({type:'order'});}catch(e){}
+  prof.name=flow.name; prof.phone=flow.phone; prof.email=flow.email; prof.myOrders=(prof.myOrders||[]).concat([order.id]); saveProfile();
+  flow.lastOrder=order; flow.cart={}; flow.view='done'; render();
+}
+function saveProf(){
+  prof.name=document.getElementById('p-name').value.trim();
+  prof.phone=document.getElementById('p-phone').value.trim().replace(/\s+/g,' ');
+  prof.email=document.getElementById('p-email').value.trim();
+  saveProfile();
+  flow.name=prof.name; flow.phone=prof.phone; flow.email=prof.email;
+  alert('Контакты сохранены');
+  render();
+}
+window.addEventListener('hashchange',()=>{flow.view=location.hash==='#/cabinet'?'cabinet':'menu';render();});
+render();
+</script>
 </body>
 </html>
