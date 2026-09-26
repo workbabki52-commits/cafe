@@ -76,6 +76,7 @@ h2{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted
 const STORE='cafe_db_v1';
 const PROFILE='cafe_client_profile';
 const BCNAME='cafe_orders';
+const DB='https://brolooove-default-rtdb.firebaseio.com';
 let db=load(STORE);
 let prof=loadProfile();
 let flow={view:location.hash==='#/cabinet'?'cabinet':'menu',cart:{},table:'',name:prof.name,phone:prof.phone,email:prof.email,comment:'',lastOrder:null};
@@ -116,7 +117,7 @@ function render(){
   brand();
   if(flow.view==='cart'){ app.innerHTML=cartHtml(); nav(); return; }
   if(flow.view==='done'){ app.innerHTML=doneHtml(); nav(); return; }
-  if(flow.view==='cabinet'){ app.innerHTML=cabinetHtml(); nav(); return; }
+  if(flow.view==='cabinet'){ cabinetHtml().then(h=>{app.innerHTML=h; nav();}); return; }
   app.innerHTML=menuHtml(); nav();
 }
 
@@ -144,12 +145,19 @@ function cartHtml(){
   <button class="btn" onclick="submit()">Отправить заказ</button>`;
 }
 function doneHtml(){ const o=flow.lastOrder; return `<div class="center"><div class="success-icon">✓</div><h1>Заказ принят!</h1><p class="sub">Контакты и номер #${o.id} сохранены в вашем кабинете</p></div><div class="summary"><div class="row"><span>Заказ</span><b>#${o.id}</b></div><div class="row"><span>Стол</span><b>${o.table}</b></div>${o.items.map(i=>`<div class="row"><span>${esc(i.name)} × ${i.qty}</span><b>${money(i.price*i.qty)}</b></div>`).join('')}<div class="row"><span>Итого</span><b>${money(o.total)}</b></div></div><div style="height:14px"></div><div class="btn" onclick="goMenu()">В меню</div>`; }
-function cabinetHtml(){
+async function cabinetHtml(){
   const LBL={new:'Новый',cooking:'Готовится',done:'Выдан',cancelled:'Отменён'};
-  function orderCard(o){ return `<div class="order"><div class="oh"><span>Заказ #${o.id} · Стол ${o.table}</span><span class="badge ${o.status}">${LBL[o.status]}</span></div><div class="oi">${o.items.map(i=>`${i.name} × ${i.qty}`).join(', ')}</div><div class="tot">${money(o.total)}</div></div>`; }
-  const mine=(prof.myOrders||[]).slice().reverse();
-  const list=db.orders.filter(o=>mine.includes(o.id)).map(orderCard).join('')||'<div class="empty">Заказов пока нет</div>';
-  return `<h1>Мой кабинет</h1><p class="sub">Ваши контакты и заказы этого устройства</p>
+  function orderCard(o){ return `<div class="order"><div class="oh"><span>Заказ #${esc(o.id)} · Стол ${o.table}</span><span class="badge ${o.status}">${LBL[o.status]||'Новый'}</span></div><div class="oi">${(o.items||[]).map(i=>`${esc(i.name)} × ${i.qty}`).join(', ')}</div><div class="tot">${money(o.total||0)}</div></div>`; }
+  const mine=(prof.myOrders||[]);
+  let list='<div class="empty">Загружаем заказы…</div>';
+  try{
+    const r=await fetch(DB+'/orders.json');
+    const d=await r.json();
+    const all=Object.values(d||{});
+    const mine_orders=all.filter(o=>mine.includes(o.uid)).slice().reverse();
+    list=mine_orders.map(orderCard).join('')||'<div class="empty">Заказов пока нет</div>';
+  }catch(e){ list='<div class="empty">Не удалось загрузить заказы</div>'; }
+  return `<h1>Мой кабинет</h1><p class="sub">Ваши контакты и заказы</p>
   <div class="card">
     <div class="field"><label>Имя</label><input id="p-name" value="${esc(prof.name)}"></div>
     <div class="field"><label>Телефон</label><input id="p-phone" value="${esc(prof.phone)}" placeholder="+7 ___-__-__"></div>
@@ -172,12 +180,15 @@ function submit(){
   flow.email=document.getElementById('f-email').value.trim();
   flow.comment=document.getElementById('f-comment').value.trim();
   const items=Object.entries(flow.cart).map(e=>{const it=getItem(e[0]);return{name:it.name,price:it.price,qty:e[1]};});
-  const order={id:db.nextId++,createdAt:new Date().toISOString(),table,name:flow.name,phone:flow.phone,email:flow.email,comment:flow.comment,items,total:cartTotal(),status:'new'};
-  db.orders.push(order); db.nextId++;
-  save(STORE,db);
-  try{new BroadcastChannel(BCNAME).postMessage({type:'order'});}catch(e){}
-  prof.name=flow.name; prof.phone=flow.phone; prof.email=flow.email; prof.myOrders=(prof.myOrders||[]).concat([order.id]); saveProfile();
-  flow.lastOrder=order; flow.cart={}; flow.view='done'; render();
+  const uid='o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const order={id:uid,uid,createdAt:new Date().toISOString(),table,name:flow.name,phone:flow.phone,email:flow.email,comment:flow.comment,items,total:cartTotal(),status:'new'};
+  fetch(DB+'/orders.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(order)})
+    .then(r=>{if(!r.ok)throw 0;return r.json();})
+    .then(()=>{
+      prof.name=flow.name; prof.phone=flow.phone; prof.email=flow.email; prof.myOrders=(prof.myOrders||[]).concat([uid]); saveProfile();
+      flow.lastOrder=order; flow.cart={}; flow.view='done'; render();
+    })
+    .catch(()=>{alert('Не удалось отправить заказ. Проверь интернет.');});
 }
 function saveProf(){
   prof.name=document.getElementById('p-name').value.trim();
